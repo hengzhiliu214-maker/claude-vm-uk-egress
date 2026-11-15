@@ -1,0 +1,15 @@
+# TEMPLATE — Lima 来宾虚拟机定义（开源分享版，已脱敏）
+# 按使用者环境调整 images / cpus / memory / disk / ssh.localPort；propagateProxyEnv 保持 false（防止宿主机代理变量注入来宾）。
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+cpus: 6
+memory: "16GiB"
+disk: "40GiB"
+mounts: []
+containerd:
+  system: false
+  user: false
+ssh:
+  localPort: 60022
+propagateProxyEnv: false

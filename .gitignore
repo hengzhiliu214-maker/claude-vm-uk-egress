@@ -1,0 +1,9 @@
+# 真实配置与凭据永不入库；仓库只发布模板与占位符
+.env
+.env.*
+*.key
+*.pw
+*secret*
+*credential*
+egress.json
+wg0.conf

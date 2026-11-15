@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically re-assert Europe/London after Lima boot-time resets
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=guest-tz-london.service
+
+[Install]
+WantedBy=timers.target

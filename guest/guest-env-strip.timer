@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically re-strip proxy variables Lima writes into /etc/environment
+
+[Timer]
+OnBootSec=20s
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=guest-env-strip.service
+
+[Install]
+WantedBy=timers.target

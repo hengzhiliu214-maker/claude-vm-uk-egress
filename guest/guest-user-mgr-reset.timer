@@ -1,0 +1,10 @@
+[Unit]
+Description=One-shot after boot: drop the early user manager created by Lima's first SSH login
+
+[Timer]
+OnBootSec=60s
+AccuracySec=10s
+Unit=guest-user-mgr-reset.service
+
+[Install]
+WantedBy=timers.target

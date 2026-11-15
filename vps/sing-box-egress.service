@@ -1,0 +1,22 @@
+[Unit]
+Description=sing-box egress (可审阅拟稿，不执行)
+After=wg-quick@wg0.service
+After=sbguard.service
+Requires=sbguard.service
+Before=sing-box-egress-route.service
+Wants=sing-box-egress-route.service
+
+[Service]
+Type=simple
+User=sb-egress
+Group=sb-egress
+DynamicUser=no
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+ExecStartPre=+/usr/local/libexec/sing-box-egress-net.sh pre-start
+ExecStart=/usr/local/bin/sing-box run -c /etc/sing-box/egress.json
+ExecStopPost=+/usr/local/libexec/sing-box-egress-net.sh down
+
+[Install]
+WantedBy=multi-user.target

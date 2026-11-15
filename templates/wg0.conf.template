@@ -1,0 +1,15 @@
+# TEMPLATE — WireGuard 服务端配置模板（开源分享版，已脱敏）
+# 需填项：<WG_PRIVATE_KEY> = 服务端私钥；<WG_PEER_PUBLIC_KEY> = 每个对端各自的公钥（两处对端各填各的）。
+# Address / ListenPort / AllowedIPs 按实际部署填写；10.66.0.0/24 为隧道内网设计常量。
+[Interface]
+Address = 10.66.0.1/24
+ListenPort = 51820
+PrivateKey = <WG_PRIVATE_KEY>
+[Peer]
+PublicKey = <WG_PEER_PUBLIC_KEY>
+AllowedIPs = 10.66.0.2/32
+
+# iphone (phonewg 2026-11-14)
+[Peer]
+PublicKey = <WG_PEER_PUBLIC_KEY>
+AllowedIPs = 10.66.0.3/32

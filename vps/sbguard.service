@@ -1,0 +1,11 @@
+[Unit]
+Description=sbguard independent guard (nftables, before ufw)
+Before=ufw.service sing-box-egress.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/libexec/sing-box-egress-net.sh sbguard-apply
+
+[Install]
+WantedBy=multi-user.target

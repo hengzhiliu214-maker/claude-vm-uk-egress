@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=GNOME Keyring
+Exec=/home/<GUEST_USER>/.config/autostart/keyring-start.sh
+X-GNOME-Autostart-enabled=true

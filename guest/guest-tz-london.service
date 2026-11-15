@@ -1,0 +1,6 @@
+[Unit]
+Description=Pin guest timezone to Europe/London (Lima resets it to the host on boot)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/timedatectl set-timezone Europe/London

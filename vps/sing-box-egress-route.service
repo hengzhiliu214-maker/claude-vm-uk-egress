@@ -1,0 +1,11 @@
+[Unit]
+Description=sing-box egress routes and stage E (可审阅拟稿，不执行)
+After=sing-box-egress.service
+BindsTo=sing-box-egress.service
+PartOf=sing-box-egress.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/libexec/sing-box-egress-net.sh up
+ExecStop=/usr/local/libexec/sing-box-egress-net.sh down

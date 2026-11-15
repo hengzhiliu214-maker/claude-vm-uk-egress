@@ -1,0 +1,7 @@
+[Unit]
+Description=Restart the login user manager once after boot so it does not keep Lima's proxy env
+After=cloud-init.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'loginctl terminate-user <用户> || true'

@@ -1,0 +1,15 @@
+[Unit]
+Description=TigerVNC server :1 for guest desktop
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=<用户>
+Environment=HOME=/home/<GUEST_USER>
+ExecStartPre=/bin/sh -c 'pgrep -x Xtigervnc >/dev/null || rm -f /tmp/.X1-lock /tmp/.X11-unix/X1'
+ExecStart=/usr/bin/vncserver :1 -geometry 1440x900 -depth 24 -localhost no -SecurityTypes VncAuth
+ExecStop=/usr/bin/vncserver -kill :1
+
+[Install]
+WantedBy=multi-user.target

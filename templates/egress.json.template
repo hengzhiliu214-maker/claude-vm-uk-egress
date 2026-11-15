@@ -1,0 +1,65 @@
+{
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "tun0",
+      "address": [
+        "172.18.0.1/30"
+      ],
+      "mtu": 1500,
+      "auto_route": false,
+      "auto_redirect": false,
+      "dns_mode": "disabled",
+      "stack": "gvisor"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "socks",
+      "tag": "socks-out",
+      "server": "<出口_IP>",
+      "server_port": 12324,
+      "version": "5",
+      "network": "tcp",
+      "username": "<SOCKS_USER>",
+      "password": "<SOCKS_PASSWORD>",
+      "routing_mark": 103
+    }
+  ],
+  "dns": {
+    "servers": [
+      {
+        "type": "tcp",
+        "tag": "dns-tcp",
+        "server": "1.1.1.1",
+        "server_port": 53,
+        "detour": "socks-out"
+      }
+    ],
+    "final": "dns-tcp"
+  },
+  "route": {
+    "rules": [
+      {
+        "inbound": [
+          "tun-in"
+        ],
+        "action": "sniff"
+      },
+      {
+        "protocol": "dns",
+        "action": "hijack-dns"
+      },
+      {
+        "port": 53,
+        "action": "reject"
+      },
+      {
+        "network": "udp",
+        "action": "reject"
+      }
+    ],
+    "final": "socks-out"
+  }
+}

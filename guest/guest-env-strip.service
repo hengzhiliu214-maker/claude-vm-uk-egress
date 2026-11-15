@@ -1,0 +1,8 @@
+[Unit]
+Description=Strip Lima-propagated proxy variables from /etc/environment
+After=cloud-init.service local-fs.target
+ConditionPathExists=/etc/environment
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/guest-env-strip.sh

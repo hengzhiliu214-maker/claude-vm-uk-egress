@@ -1,0 +1,56 @@
+# 来宾机 nftables 规则集实时导出快照（开源分享版，已脱敏：VPS 端点已替换为 <VPS_IP>）
+# 内容含三部分：killswitch 杀开关表（默认 drop，仅放行 lo / wg0 / VPS 隧道端点 / DHCP / 主机侧 SSH·VNC）、
+# wg-quick 自建表、Lima NAT 表。192.168.5.0/24 为 Lima 虚拟网络常量，10.66.0.0/24 为隧道内网常量。此为快照，用作模板参考。
+table inet killswitch {
+	chain output {
+		type filter hook output priority filter; policy drop;
+		oifname "lo" accept
+		ct state established,related accept
+		oifname "wg0" accept
+		ip daddr <VPS_IP> udp dport 51820 accept
+		udp sport 68 udp dport 67 accept
+	}
+
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iifname "lo" accept
+		ct state established,related accept
+		iifname "wg0" accept
+		iifname "eth0" ip saddr 192.168.5.2 tcp dport { 22, 5901 } accept
+		udp sport 67 udp dport 68 accept
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+	}
+}
+table ip wg-quick-wg0 {
+	chain preraw {
+		type filter hook prerouting priority raw; policy accept;
+		iifname != "wg0" ip daddr 10.66.0.2 fib saddr type != local drop
+	}
+
+	chain premangle {
+		type filter hook prerouting priority mangle; policy accept;
+		meta l4proto udp meta mark set ct mark
+	}
+
+	chain postmangle {
+		type filter hook postrouting priority mangle; policy accept;
+		meta l4proto udp meta mark 0x0000ca6c ct mark set meta mark
+	}
+}
+table ip nat {
+	chain LIMADNS {
+	}
+
+	chain PREROUTING {
+		type nat hook prerouting priority dstnat; policy accept;
+		counter packets 35 bytes 3251 jump LIMADNS
+	}
+
+	chain OUTPUT {
+		type nat hook output priority dstnat; policy accept;
+		counter packets 240 bytes 30562 jump LIMADNS
+	}
+}

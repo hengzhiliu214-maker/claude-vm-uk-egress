@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=light-locker
+Exec=light-locker
+Hidden=true
+X-GNOME-Autostart-enabled=false
