@@ -23,7 +23,7 @@ Lima 虚拟网络 `192.168.5.0/24`、sing-box TUN 段 `172.18.0.1/30`、示例�
 模板文件（templates/）的文件头已注明 TEMPLATE 与需填项；`egress.json.template` 因 JSON 不支持注释，
 其模板说明只写在本清单内（见该文件条目）。
 
-## vps/（中转 VPS，5 个文件）
+## vps/（中转 VPS，6 个文件）
 
 | 文件 | 来源位置 | 作用 | 脱敏替换 | 行数 |
 |---|---|---|---|---|
@@ -31,9 +31,10 @@ Lima 虚拟网络 `192.168.5.0/24`、sing-box TUN 段 `172.18.0.1/30`、示例�
 | sing-box-egress.service | /etc/systemd/system/sing-box-egress.service | sing-box 主服务单元（以专用低权用户运行，启停挂接核心脚本） | 无（文件内 `wg-quick@wg0` 为 systemd 模板单元名，非邮箱） | 22 |
 | sing-box-egress-route.service | /etc/systemd/system/sing-box-egress-route.service | 路由与放行阶段的 oneshot 单元（调核心脚本 up/down） | 无 | 11 |
 | sbguard.service | /etc/systemd/system/sbguard.service | 独立守卫层服务单元（开机先于 ufw 应用无许可基线） | 无 | 11 |
+| wstunnel.service | /etc/systemd/system/wstunnel.service | 隧道传输服务端单元：在 TCP 443 上终止 TLS WebSocket，把来宾机 WireGuard 数据报交回本机监听（证书与私钥在 VPS 本地自签生成，不随包发布） | 无 | 14 |
 | after.init | /etc/ufw/after.init | UFW 启动钩子：ufw start 时调核心脚本 `ufw-after` 恢复标记/规则，失败则回滚并停服（须保持可执行权限） | 无（文件内无 SB-MARK 字样，钩子以调用脚本实现）；第三方文件：Canonical 版权、GPLv3，见 THIRD-PARTY-NOTICES.md | 49 |
 
-## guest/（来宾虚拟机，15 个文件）
+## guest/（来宾虚拟机，16 个文件）
 
 | 文件 | 来源位置 | 作用 | 脱敏替换 | 行数 |
 |---|---|---|---|---|
@@ -46,6 +47,7 @@ Lima 虚拟网络 `192.168.5.0/24`、sing-box TUN 段 `172.18.0.1/30`、示例�
 | guest-user-mgr-reset.timer | /etc/systemd/system/guest-user-mgr-reset.timer | 开机 60 秒一次性触发上项 | 无 | 10 |
 | vncserver-guest.service | /etc/systemd/system/vncserver-guest.service | TigerVNC:1 桌面服务（开机自启、防自匹配守护） | User → `<用户>`；HOME → `/home/<GUEST_USER>` | 15 |
 | 99-wg-rules-keep.conf | /etc/systemd/networkd.conf.d/99-wg-rules-keep.conf | networkd drop-in：`ManageForeignRoutingPolicyRules=no`，防 networkd 重启清掉 wg-quick 策略规则 | 无 | 6 |
+| wg-transport.service | /etc/systemd/system/wg-transport.service | 隧道传输客户端单元：在本机回环接收 WireGuard 数据报，经 TLS WebSocket（TCP 443）送往 VPS；带与 wg-quick 相同的 socket mark，避免被策略路由送回隧道自身 | VPS 地址 → `<VPS_IP>` | 17 |
 | keyring-start.sh | ~/.config/autostart/keyring-start.sh | 桌面会话启动时以空口令解锁 GNOME Keyring（无 PAM 登录环境下使用） | 原件为单行字面转义形式（写入时换行未生效、且原件自启实际未生效），本包按原意恢复为正常格式并在文件内注明，逻辑未改 | 3 |
 | gnome-keyring.desktop | ~/.config/autostart/gnome-keyring.desktop | 上项的自启入口 | 同上恢复格式；Exec 路径登录名 → `<GUEST_USER>` | 5 |
 | noblank.desktop | ~/.config/autostart/noblank.desktop | 自启关闭屏保空白（xset s off / noblank） | 同上恢复格式 | 5 |
@@ -62,20 +64,22 @@ Lima 虚拟网络 `192.168.5.0/24`、sing-box TUN 段 `172.18.0.1/30`、示例�
 | 打开Claude桌面.command | ~/Desktop/打开Claude桌面.command | 一键入口：挂载虚拟机镜像 → 启动虚拟机 → 确保 VNC 在跑 → 打开远程桌面 | 外置盘卷名 → `<外置盘>`；VM 卷名 → `<VM卷名>` | 10 |
 | 打开Claude虚拟机.command | ~/Desktop/打开Claude虚拟机.command | 一键入口：挂载镜像 → 启动虚拟机 → 进入其 shell | 外置盘卷名 → `<外置盘>`；VM 卷名 → `<VM卷名>` | 9 |
 
-## templates/（模板，4 个文件）
+## templates/（模板，5 个文件）
 
 | 文件 | 来源位置 | 作用 | 脱敏替换 | 行数 |
 |---|---|---|---|---|
 | egress.json.template | /etc/sing-box/egress.json | sing-box 出口配置模板：TUN 入站（gvisor 栈）→ SOCKS 出站、DNS 劫持与拒绝规则。因 JSON 不支持注释，TEMPLATE 说明在本清单：需填 `<出口_IP>`、`<SOCKS_USER>`、`<SOCKS_PASSWORD>` 与上游端口 | server → `<出口_IP>`；username/password 在 VPS 上远程遮蔽后分别替换为 `<SOCKS_USER>` / `<SOCKS_PASSWORD>`，真值未离开 VPS | 65 |
 | wg0.conf.template | /etc/wireguard/wg0.conf | WireGuard 服务端配置模板（文件头已注需填项） | PrivateKey / 各 Peer 的 PublicKey 在 VPS 上远程遮蔽为 `<WG_PRIVATE_KEY>` / `<WG_PEER_PUBLIC_KEY>`，真值未离开 VPS | 15 |
+| wg0-client.conf.template | /etc/wireguard/wg0.conf（来宾机） | WireGuard 来宾机配置模板：端点指向本机回环上的传输客户端，MTU 显式 1420（文件头已注需填项与原因） | PrivateKey / Peer 的 PublicKey 替换为 `<WG_PRIVATE_KEY>` / `<WG_PEER_PUBLIC_KEY>` | 14 |
 | lima.yaml.template | 宿主机 $LIMA_HOME/claude-vm/lima.yaml | Lima 来宾机定义模板（文件头已注调整项）；当前值为 6 核 / 16GiB / 40GiB，propagateProxyEnv=false | 无敏感值（原件本就不含登录名与个性化路径） | 15 |
-| nftables-guest-ruleset.txt | 来宾机 `sudo nft list ruleset` 实时导出 | 来宾杀开关规则快照模板：killswitch 表（默认 drop，仅放行 lo / wg0 / VPS 隧道端点 / DHCP / 宿主侧 SSH·VNC）+ wg-quick 自建表 + Lima NAT 表 | VPS 隧道端点 IP → `<VPS_IP>`；192.168.5.0/24 与 10.66.0.0/24 为设计常量保留（文件头已注） | 56 |
+| nftables-guest-ruleset.txt | 来宾机 `sudo nft list ruleset` 实时导出 | 来宾杀开关规则快照模板：killswitch 表（默认 drop，仅放行 lo / wg0 / VPS 传输端点 TCP 443 / DHCP / 宿主侧 SSH·VNC）+ wg-quick 自建表 + Lima NAT 表 | VPS 隧道端点 IP → `<VPS_IP>`；192.168.5.0/24 与 10.66.0.0/24 为设计常量保留（文件头已注） | 56 |
 
 ## 缺失 / 跳过登记
 
 - guest-tz-london、guest-user-mgr-reset 没有独立脚本文件（命令内嵌于 systemd 单元），已按实情收录单元本身，不另造脚本。
 - /etc/systemd/networkd.conf 本体只含发行版默认注释行（被注释的 `#ManageForeignRoutingPolicyRules=yes`），实际生效的是 networkd.conf.d 里的 drop-in，故只收 drop-in。
 - 清单内其余文件全部取回，无其他缺失。
+- wstunnel 的 TLS 证书与私钥在 VPS 本地自签生成，属凭据材料，不随包发布；客户端不校验证书的取舍见 docs《流程与工作框架》§2.4。
 
 ## 终检扫描（本包全部文件，含本清单）
 
@@ -90,4 +94,4 @@ Lima 虚拟网络 `192.168.5.0/24`、sing-box TUN 段 `172.18.0.1/30`、示例�
 | 远程遮蔽残留标记 | 0 |
 | 长 base64 令牌疑似密钥 | 0（唯一命中为脚本内 sha256 全零占位常量，已核对） |
 
-代码总量：28 个代码/配置文件 + 本清单；核心脚本与原件逐行核对一致（仅脱敏行不同）。
+代码总量：31 个代码/配置文件 + 本清单；核心脚本与原件逐行核对一致（仅脱敏行不同）。

@@ -11,7 +11,7 @@ A dedicated egress environment that runs inside a local VM, transits a WireGuard
 ```text
 Mac（宿主机）
  └─ Lima 虚拟机 guest（Ubuntu 24.04）
-      └─ WireGuard 隧道 ──► 伦敦 VPS（sing-box，仅 SOCKS 出口、无直连回落）
+      └─ WireGuard 隧道（经 TLS WebSocket / TCP 443 传输层承载）──► 伦敦 VPS（sing-box，仅 SOCKS 出口、无直连回落）
                                └─ 英国住宅网络出口
 ```
 
@@ -21,8 +21,8 @@ Mac（宿主机）
 ## 内容
 
 - `docs/流程与工作框架.md` — 全文：问题定义、最终架构、逐项验收结论、协作工作框架、长期运维纪律与踩坑结论。
-- `vps/` — 出口服务器侧：出口守护脚本、systemd 单元、防火墙恢复钩子。
-- `guest/` — 虚拟机侧：防泄漏守护、时区与代理环境修正、桌面会话自启配置。
+- `vps/` — 出口服务器侧：出口守护脚本、隧道传输服务端、systemd 单元、防火墙恢复钩子。
+- `guest/` — 虚拟机侧：防泄漏守护、隧道传输客户端、时区与代理环境修正、桌面会话自启配置。
 - `mac/` — 宿主机侧：系统代理守护脚本、开机自启配置、拉起桌面的命令脚本。
 - `templates/` — sing-box、nftables、WireGuard、Lima 的配置模板（占位符版）。
 - `CODE-INVENTORY.md` — 每个文件的来源位置、行数、脱敏方式与暂不公开项说明。
@@ -41,6 +41,7 @@ Mac（宿主机）
 - 出口认证失败注入：guest 立即断网，抓包仅见白名单流量；
 - 来宾机自动更新对网络组件的副作用已定位并由持久化守护吸收，重启与更新后复验通过；
 - 整链备份与恢复演练完成（四种场景）。
+- 隧道传输层加固完成：接入网络拦截 UDP 回程、移动热点高丢包的条件下改经 TCP 443 承载，热点下丢包 0%、页面完整加载。
 
 验收结论全文见 `docs/流程与工作框架.md`。
 

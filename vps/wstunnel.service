@@ -1,0 +1,14 @@
+[Unit]
+Description=wstunnel server (WireGuard over TLS WebSocket, TCP 443)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wstunnel server wss://0.0.0.0:443 --tls-certificate /etc/wstunnel/server.crt --tls-private-key /etc/wstunnel/server.key
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+# TEMPLATE — WireGuard 来宾机（客户端）配置模板（开源分享版，已脱敏）
+# 需填项：<WG_PRIVATE_KEY> = 来宾机私钥；<WG_PEER_PUBLIC_KEY> = 服务端公钥。
+# Endpoint 指向本机回环上的传输层客户端（见 guest/wg-transport.service），不直接指向 VPS；
+# MTU 必须显式写 1420：端点为回环时 wg-quick 会按回环接口 MTU 推导出错误值。
+[Interface]
+Address = 10.66.0.2/32
+MTU = 1420
+PrivateKey = <WG_PRIVATE_KEY>
+
+[Peer]
+PublicKey = <WG_PEER_PUBLIC_KEY>
+Endpoint = 127.0.0.1:51820
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25
